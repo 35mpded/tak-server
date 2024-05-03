@@ -254,37 +254,68 @@ sed -i "s%\`awk '/MemTotal/ {print \$2}' /proc/meminfo\`%$mem%g" tak/setenv.sh
 
 ## Set variables for generating CA and client certs
 printf $warning "SSL setup. Hit enter (x3) to accept the defaults:\n"
-read -p "State (for cert generation). Default [state] : " state
-read -p "City (for cert generation). Default [city]: " city
-read -p "Organizational Unit (for cert generation). Default [org]: " orgunit
+read -p "State (for cert generation). Default [Not applicable] : " state
+read -p "City (for cert generation). Default [Not applicable]: " city
+read -p "Organizational Name (for cert generation). Default [CivTAK]: " org
+read -p "Organizational Unit (for cert generation). Default [civtak.local]: " orgunit
+read -p "Common Name (e.g., fully qualified domain name or FQDN). Default [server1.civtak.local]: " cn
+read -p "Certificate Authority Password. Default [atakatak]: " capass
+# You can also set the password for the individual certificate as an .env variable (PASS), if you figure out how to reflect this change in the config files.
+#read -p "Password for encryption of individual certificates. Default [atakatak]: " pass
 
 if [ -z "$state" ];
 then
-	state="state"
+    state="Not applicable"
 fi
 
 if [ -z "$city" ];
 then
-	city="city"
+    city="Not applicable"
+fi
+
+if [ -z "$org" ];
+then
+    org="CivTAK"
 fi
 
 if [ -z "$orgunit" ];
 then
-	orgunit="org"
+    orgunit="civtak.local"
+fi
+
+if [ -z "$cn" ];
+then
+    cn="server1.civtak.local"
+fi
+
+if [ -z "$capass" ];
+then
+    capass="atakatak"
 fi
 
 # Update local env
+# Unfortunetly `Country` is hardcoded as `US` incert-metadata.sh. Can't do anything about that.
 export STATE=$state
 export CITY=$city
+export ORGANIZATION=$org
 export ORGANIZATIONAL_UNIT=$orgunit
-
+export CAPASS=$capass
+export CN=$cn
 
 # Writes variables to a .env file for docker-compose
 cat << EOF > .env
 STATE=$state
 CITY=$city
+ORGANIZATION=$org
 ORGANIZATIONAL_UNIT=$orgunit
+CAPASS=$capass
+CN=$cn
 EOF
+
+# Updaing config files with the new Certificate Authority Password
+printf $info "Updating config files with CA password\n"
+sed -i "s/atakatak/$CAPASS/g" ./tak/TAKIgniteConfig.xsd
+sed -i "s/atakatak/$CAPASS/g" ./tak/CoreConfig.xml
 
 ### Runs through setup, starts both containers
 $DOCKER_COMPOSE --file $DOCKERFILE up  --force-recreate -d
@@ -327,8 +358,8 @@ cd tak/certs
 
 # Make 2 data packages
 cd ../../
-./scripts/certDP.sh $IP user1
-./scripts/certDP.sh $IP user2
+./scripts/certDP.sh $IP user1 $capass
+./scripts/certDP.sh $IP user2 $capass
 
 printf $info "Waiting for TAK server to go live. This should take <1m with an AMD64, ~2min on a ARM64 (Pi)\n"
 $DOCKER_COMPOSE start tak
