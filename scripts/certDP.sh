@@ -8,6 +8,7 @@ fi
 
 IP=$1
 USER=$2
+PASS=$3
 
 # server.pref
 
@@ -22,8 +23,8 @@ echo "  </preference>" >> server.pref
 echo "  <preference version=\"1\" name=\"com.atakmap.app_preferences\">" >> server.pref
 echo "    <entry key=\"displayServerConnectionWidget\" class=\"class java.lang.Boolean\">true</entry>" >> server.pref
 echo "    <entry key=\"caLocation\" class=\"class java.lang.String\">cert/$IP.p12</entry>" >> server.pref
-echo "    <entry key=\"caPassword\" class=\"class java.lang.String\">atakatak</entry>" >> server.pref
-echo "    <entry key=\"clientPassword\" class=\"class java.lang.String\">atakatak</entry>" >> server.pref
+echo "    <entry key=\"caPassword\" class=\"class java.lang.String\">$PASS</entry>" >> server.pref
+echo "    <entry key=\"clientPassword\" class=\"class java.lang.String\">$PASS</entry>" >> server.pref
 echo "    <entry key=\"certificateLocation\" class=\"class java.lang.String\">cert/$USER.p12</entry>" >> server.pref
 echo "  </preference>" >> server.pref
 echo "</preferences>" >> server.pref
